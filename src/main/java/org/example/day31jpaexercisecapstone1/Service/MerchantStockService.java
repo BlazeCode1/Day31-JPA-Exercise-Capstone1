@@ -191,14 +191,14 @@ public int addMoreStock(Integer productID, Integer merchantID, Integer amount) {
         }
         return 1; //no products met the criteria.
     }
-//    //Admin
+    //Admin
     public String evaluateCommissionTier(Integer adminID,Integer merchantID){
         if(!isUserAdmin(adminID)) return "Access Denied: Only admins can evaluate Commission Tier.";
         Merchant targetMerchant = merchantService.findById(merchantID);
         double totalRevenue = 0;
 
 
-        if(targetMerchant == null) return null;
+        if(targetMerchant == null) return "Invalid Merchant ID.";;
 
         for (MerchantStock stock : merchantStockRepository.findAll()){
             if(stock.getMerchant_id().equals(merchantID)){
@@ -236,7 +236,6 @@ public int addMoreStock(Integer productID, Integer merchantID, Integer amount) {
                 + (commissionRate * 100) + "% commission rate applied.";
     }
 
-//    //Admin
     public String evaluatingMerchantViolation(Integer adminID,Integer merchantID){
         if(!isUserAdmin(adminID)) return "Access Denied: Only admins can evaluate Merchant Violation.";
         Merchant targetMerchant = merchantService.findById(merchantID);
@@ -296,11 +295,15 @@ public int addMoreStock(Integer productID, Integer merchantID, Integer amount) {
 
         if (violationCount >= 5) {
             targetMerchant.setSuspended(true);
-            for (MerchantStock ms : merchantStockRepository.findAll()){
-                if(merchantID.equals(ms.getMerchant_id())){
+            merchantService.saveMerchant(targetMerchant);
+
+            for (MerchantStock ms : merchantStockRepository.findAll()) {
+                if (merchantID.equals(ms.getMerchant_id())) {
                     ms.setStock(0);
+                    merchantStockRepository.save(ms);
                 }
             }
+
             return "Merchant " + targetMerchant.getName()
                     + " has been suspended due to " + violationCount + " pricing violations.";
         }
