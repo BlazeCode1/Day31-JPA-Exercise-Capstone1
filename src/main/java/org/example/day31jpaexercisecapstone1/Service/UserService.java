@@ -49,7 +49,7 @@ public class UserService {
     }
 
 
-
-
-
+    public void saveUser(User targetUser) {
+        userRepository.save(targetUser);
+    }
 }

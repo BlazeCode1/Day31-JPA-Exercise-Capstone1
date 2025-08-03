@@ -16,8 +16,8 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer ID;
 
-    @NotEmpty(message = "Name Cannot Be Empty")
+    @NotEmpty(message = "Category Name Cannot Be Empty")
     @Size(min = 3,message = "Name length is at least 3 or above")
-    @Column(columnDefinition = "varchar(20) not null")
+    @Column(columnDefinition = "varchar(20) not null unique")
     private String name;
 }

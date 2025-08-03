@@ -17,6 +17,7 @@ import java.time.LocalDate;
 @Entity
 @Check(constraints = "price > 0 and total_sold >=0 and total_revenue >=0")
 public class Product {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer ID;
@@ -26,12 +27,12 @@ public class Product {
     @Column(columnDefinition = "varchar(20) not null ")
     private String name;
 
-    @NotNull
+    @NotNull(message = "price must not be null")
     @Positive(message = "Must Be Positive Number")
     @Column(columnDefinition = "double not null")
     private Double price;
 
-    @NotEmpty(message = "category ID must not be empty")
+    @NotNull(message = "categoryId must not be null")
     @Column(columnDefinition = "int not null")
     private Integer category_id;
 

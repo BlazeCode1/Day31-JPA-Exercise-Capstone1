@@ -31,17 +31,21 @@ public class ProductController {
         if (err.hasErrors()) {
             return ResponseEntity.badRequest().body(new ApiResponse(err.getFieldError().getDefaultMessage()));
         }
-        if (productService.addProduct(product) == 0)
-            return ResponseEntity.badRequest().body(new ApiResponse("Product ID Already Used"));
 
-        if (productService.addProduct(product) == 1)
-            return ResponseEntity.badRequest().body(new ApiResponse("Category List Empty"));
+        int result = productService.addProduct(product);
 
-        if (productService.addProduct(product) == 2)
+        if (result == 0)
+            return ResponseEntity.badRequest().body(new ApiResponse("Product Already Exists"));
+
+        if (result == 1)
+            return ResponseEntity.badRequest().body(new ApiResponse("Category List Is Empty"));
+
+        if (result == 2)
             return ResponseEntity.badRequest().body(new ApiResponse("Invalid Category ID"));
 
         return ResponseEntity.ok(new ApiResponse("Product Added Successfully"));
     }
+
 
     @PutMapping("/update")
     public ResponseEntity<?> // trying to write an actual spring style.:)

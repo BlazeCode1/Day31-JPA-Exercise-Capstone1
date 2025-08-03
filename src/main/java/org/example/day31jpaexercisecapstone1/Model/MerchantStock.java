@@ -17,7 +17,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Check(constraints = "stock > 10")
 public class MerchantStock {
 
     @Id
@@ -25,20 +24,19 @@ public class MerchantStock {
     private Integer id;
 
 
-    @NotEmpty(message = "ProductID Cannot Be Empty")
+    @NotNull(message = "ProductID Cannot Be Empty")
     @Column(columnDefinition = "int not null")
     private Integer product_id;
 
-    @NotEmpty(message = "merchantID Cannot Be Empty")
+    @NotNull(message = "merchantID Cannot Be Empty")
     @Column(columnDefinition = "int not null")
     private Integer merchant_id;
 
     @NotNull(message = "Stock cannot be empty")
-    @Min(value = 10,message = "Merchant Stock Has to be more than 10")
     @Column(columnDefinition = "int not null")
     private Integer stock;
 
-    @Column(columnDefinition = "int")
+    @Column(columnDefinition = "int default 0")
     private Integer purchase_count;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -48,8 +46,10 @@ public class MerchantStock {
     @Column(columnDefinition = "boolean")
     private boolean is_clearance;
 
-    @Column(columnDefinition = "double")
-    private double clearance_price;
+
+    @Column(columnDefinition = "double default 0")
+    private double clearance_price = 0.0;
+
 
 
 }

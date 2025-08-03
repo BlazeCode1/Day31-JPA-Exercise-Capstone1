@@ -23,33 +23,32 @@ public class ProductService {
     public List<Product> getAllProducts(){
         return productRepository.findAll();
     }
-
-    public int addProduct(Product product){
-        if(categoryService.getAllCategories().isEmpty()){
-            return 1;
-        }
-//        for (Product p : products){
-//            if(product.getID().equals(p.getID())){
-//                return 0;
-//            }
-//        }
-        Product foundProduct = productRepository.getById(product.getID());
-        if(foundProduct.equals(product)){
-            return 0;
+    public int addProduct(Product product) {
+        // Check if categories exist
+        if (categoryService.getAllCategories().isEmpty()) {
+            return 1; // No categories available
         }
 
-//        for (Category c : categoryService.getAllCategories()){
-//            if(product.getCategoryID().equals(c.getID())){
-//                products.add(product);
-//                return 3;
-//            }
-//        }
-        Category foundCategory = categoryService.findByID(foundProduct.getCategory_id());
-        if(foundCategory == null){
-        return 2;
+        // Check if the given category ID is valid
+        Category foundCategory = categoryService.findByID(product.getCategory_id());
+        if (foundCategory == null) {
+            return 2; // Invalid category
         }
+
+        // Check for duplicate product_code
+        for (Product p : productRepository.findAll()) {
+            if (p.getProduct_code().equalsIgnoreCase(product.getProduct_code())) {
+                return 0; // Product already exists
+            }
+        }
+
+        // Set initial defaults
+        product.setTotal_sold(0);
+        product.setTotal_revenue(0.0);
+
+        // Save new product
         productRepository.save(product);
-       return 3;
+        return 3; // Success
     }
 
     public int updateProduct(Product product){
@@ -112,6 +111,7 @@ public class ProductService {
     }
 
 
-
-
+    public void saveProduct(Product targetProduct) {
+        productRepository.save(targetProduct);
+    }
 }

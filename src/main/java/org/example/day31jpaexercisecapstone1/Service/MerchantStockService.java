@@ -22,30 +22,32 @@ public class MerchantStockService {
         return merchantStockRepository.findAll();
     }
 
-    public int addMerchantStock(MerchantStock merchantStock){
-        if(productService.getAllProducts().isEmpty()) { // checking if products are available.
-            return 0;
+    public int addMerchantStock(MerchantStock merchantStock) {
+        if (productService.getAllProducts().isEmpty()) return 0;
+        if (merchantService.getAllMerchants().isEmpty()) return 1;
+
+
+        for (MerchantStock m : merchantStockRepository.findAll()) {
+            if (m.getMerchant_id().equals(merchantStock.getMerchant_id()) &&
+                    m.getProduct_id().equals(merchantStock.getProduct_id())) {
+                return 5; // Already exists
+            }
         }
-        if(merchantService.getAllMerchants().isEmpty()) {  // checking if merchants are empty
-            return 1;
+
+
+        if (productService.findById(merchantStock.getProduct_id()) == null) return 2;
+        if (merchantService.findById(merchantStock.getMerchant_id()) == null) return 3;
+
+        if(merchantStock.getStock() >= 10) {
+
+            merchantStock.setStock_added_date(LocalDate.now());
+            merchantStock.set_clearance(false);
+            merchantStockRepository.save(merchantStock);
+            return 4; // Success
         }
-        MerchantStock foundMerchantStock = merchantStockRepository.getById(merchantStock.getId());
-        if(foundMerchantStock.equals(merchantStock)){
-            return 5;
-        }
-
-
-
-        if(productService.findById(merchantStock.getMerchant_id()) == null) return 2;
-        if(merchantService.findById(merchantStock.getProduct_id()) == null) return 3;
-
-        merchantStock.setStock_added_date(LocalDate.now());
-        merchantStock.set_clearance(false);
-        merchantStockRepository.save(merchantStock);
-
-        return 4;
-
+        return 6;
     }
+
 
     public int updateMerchantStock(MerchantStock merchantStock){
         if(productService.getAllProducts().isEmpty()) return 0;
@@ -92,57 +94,56 @@ public int addMoreStock(Integer productID, Integer merchantID, Integer amount) {
 }
 
 //
-    public int userBuyProduct(Integer userID, Integer productID, Integer merchantID){
+public int userBuyProduct(Integer userID, Integer productID, Integer merchantID) {
+    if (productService.getAllProducts().isEmpty()) return 0;
+    if (merchantService.getAllMerchants().isEmpty()) return 1;
 
-        Product targetProduct = productService.findById(productID);
-        Merchant targetMerchant = merchantService.findById(merchantID);
-        User targetUser = userService.findById(userID);
+    Product targetProduct = productService.findById(productID);
+    if (targetProduct == null) return 2;
 
-        if(productService.getAllProducts().isEmpty()) return 0;
-        if(merchantService.getAllMerchants().isEmpty()) return 1;
-        if(targetProduct == null) return 2;
-        if(targetMerchant == null) return 3;
-        if(targetUser == null) return 4;
-        if(checkIfProductInStock(productID,merchantID)) return 5;
+    Merchant targetMerchant = merchantService.findById(merchantID);
+    if (targetMerchant == null) return 3;
 
-        MerchantStock targetStock = null;
+    User targetUser = userService.findById(userID);
+    if (targetUser == null) return 4;
 
+    if (targetMerchant.isSuspended()) return 12;
 
-
-
-        for (MerchantStock m : merchantStockRepository.findAll()){
-            if(productID.equals(m.getProduct_id()) && merchantID.equals(m.getMerchant_id())){
-                targetStock = m;
-                break;
-            }
+    MerchantStock targetStock = null;
+    for (MerchantStock m : merchantStockRepository.findAll()) {
+        if (productID.equals(m.getProduct_id()) && merchantID.equals(m.getMerchant_id())) {
+            targetStock = m;
+            break;
         }
-
-
-        if(targetMerchant.isSuspended()) return 12;
-
-
-
-
-        if(targetStock == null || targetProduct == null || targetUser == null ) return 6; // to be safe
-
-        if(targetStock.getStock() == 0) return 9;
-        double finalPrice = targetStock.is_clearance() ? targetStock.getClearance_price() : targetProduct.getPrice();
-
-        if(targetUser.getBalance() < finalPrice) return 7;
-        //User deductBalance
-        targetUser.setBalance(targetUser.getBalance() - finalPrice);
-
-        //Product setters
-        targetProduct.setLast_sold_date(LocalDate.now());
-        targetProduct.setTotal_sold(targetProduct.getTotal_sold() + 1);
-        targetProduct.setTotal_revenue(targetProduct.getTotal_revenue() + finalPrice);
-
-        //Stock setters
-        targetStock.setStock(targetStock.getStock() - 1);
-        targetStock.setPurchase_count(targetStock.getPurchase_count() + 1);
-        return 8;
-
     }
+
+    if (targetStock == null) return 5;
+    if (targetStock.getStock() == 0) return 9;
+
+    double finalPrice = targetStock.is_clearance() ?
+            targetStock.getClearance_price() :
+            targetProduct.getPrice();
+
+    if (targetUser.getBalance() < finalPrice) return 7;
+
+    // Apply changes
+    targetUser.setBalance(targetUser.getBalance() - finalPrice);
+    targetProduct.setLast_sold_date(LocalDate.now());
+    targetProduct.setTotal_sold(targetProduct.getTotal_sold() + 1);
+    targetProduct.setTotal_revenue(targetProduct.getTotal_revenue() + finalPrice);
+    targetStock.setStock(targetStock.getStock() - 1);
+    Integer currentCount = targetStock.getPurchase_count();
+    if (currentCount == null) currentCount = 0;
+    targetStock.setPurchase_count(currentCount + 1);
+
+    // Save changes
+    userService.saveUser(targetUser);
+    productService.saveProduct(targetProduct);
+    merchantStockRepository.save(targetStock);
+
+    return 8;
+}
+
 
     public ArrayList<Product> getOutOfStockProductsForMerchant(Integer merchantID){
         ArrayList<Integer> outOfStockIDs = new ArrayList<>();

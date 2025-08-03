@@ -21,7 +21,7 @@ public class Merchant {
 
     @NotEmpty(message = "Merchant Name Cannot Be Empty")
     @Size(min = 3,message = "Merchant Name Can Only ")
-    @Column(columnDefinition = "varchar(20) not null")
+    @Column(columnDefinition = "varchar(20) not null unique")
     private String name;
 
     @Column(columnDefinition = "double")

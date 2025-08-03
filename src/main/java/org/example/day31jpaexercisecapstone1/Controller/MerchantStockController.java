@@ -28,16 +28,19 @@ public class MerchantStockController {
 
     @PostMapping("/add")
     public ResponseEntity<?> addMerchantStock(@Valid @RequestBody MerchantStock merchantStock, Errors err) {
-        if (err.hasErrors())
+        if (err.hasErrors()) {
             return ResponseEntity.badRequest().body(new ApiResponse(err.getFieldError().getDefaultMessage()));
+        }
+
         int result = merchantStockService.addMerchantStock(merchantStock);
 
         return switch (result) {
-            case 0 -> ResponseEntity.badRequest().body(new ApiResponse("Product List Empty"));
-            case 1 -> ResponseEntity.badRequest().body(new ApiResponse("Merchant List Empty"));
-            case 2 -> ResponseEntity.badRequest().body(new ApiResponse("Invalid Merchant ID"));
-            case 3 -> ResponseEntity.badRequest().body(new ApiResponse("Invalid Product ID"));
-            case 5 -> ResponseEntity.badRequest().body(new ApiResponse("MerchantStock ID Already Used"));
+            case 0 -> ResponseEntity.badRequest().body(new ApiResponse("Product List Is Empty"));
+            case 1 -> ResponseEntity.badRequest().body(new ApiResponse("Merchant List Is Empty"));
+            case 2 -> ResponseEntity.badRequest().body(new ApiResponse("Invalid Product ID"));
+            case 3 -> ResponseEntity.badRequest().body(new ApiResponse("Invalid Merchant ID"));
+            case 5 -> ResponseEntity.badRequest().body(new ApiResponse("MerchantStock Already Exists"));
+            case 6 -> ResponseEntity.ok().body(new ApiResponse("stock has to be >= 10"));
             default -> ResponseEntity.ok(new ApiResponse("Merchant Stock Added Successfully"));
         };
     }
@@ -80,24 +83,23 @@ public class MerchantStockController {
     }
 
     @PostMapping("/purchase/{userID}/{productID}/{merchantID}")
-    public ResponseEntity<?> userPurchaseProduct(@PathVariable Integer userID,@PathVariable Integer productID,@PathVariable Integer merchantID){
-        int result = merchantStockService.userBuyProduct(userID,productID,merchantID);
-        return switch (result){
-            case 0 -> ResponseEntity.ok().body(new ApiResponse("Product List is Empty"));
-            case 1 -> ResponseEntity.ok().body(new ApiResponse("Merchant List is Empty"));
-            case 2 -> ResponseEntity.badRequest().body(new ApiResponse("Invalid Product ID"));
-            case 3 -> ResponseEntity.badRequest().body(new ApiResponse("Invalid Merchant ID"));
-            case 4 -> ResponseEntity.badRequest().body(new ApiResponse("Invalid User ID"));
-            case 5 -> ResponseEntity.ok().body(new ApiResponse("Product Is Out Of Stock"));
-            case 6  -> ResponseEntity.internalServerError().body(new ApiResponse("(Null Pointer exception)"));
-            case 7 -> ResponseEntity.ok().body(new ApiResponse("Insufficient Balance"));
-            case 9 -> ResponseEntity.ok().body(new ApiResponse("Product Out Of Stock"));
-            case 12 -> ResponseEntity.badRequest().body(new ApiResponse("Merchant is Suspended"));
-            default -> ResponseEntity.ok(new ApiResponse("User Purchased Successfully"));
+    public ResponseEntity<?> userPurchaseProduct(@PathVariable Integer userID, @PathVariable Integer productID, @PathVariable Integer merchantID) {
+        int result = merchantStockService.userBuyProduct(userID, productID, merchantID);
+
+        return switch (result) {
+            case 0 -> ResponseEntity.badRequest().body(new ApiResponse("Product list is empty"));
+            case 1 -> ResponseEntity.badRequest().body(new ApiResponse("Merchant list is empty"));
+            case 2 -> ResponseEntity.badRequest().body(new ApiResponse("Invalid product ID"));
+            case 3 -> ResponseEntity.badRequest().body(new ApiResponse("Invalid merchant ID"));
+            case 4 -> ResponseEntity.badRequest().body(new ApiResponse("Invalid user ID"));
+            case 5, 9 -> ResponseEntity.badRequest().body(new ApiResponse("Product is out of stock"));
+            case 6 -> ResponseEntity.badRequest().body(new ApiResponse("Unexpected error during purchase"));
+            case 7 -> ResponseEntity.badRequest().body(new ApiResponse("Insufficient balance"));
+            case 12 -> ResponseEntity.badRequest().body(new ApiResponse("Merchant is suspended"));
+            default -> ResponseEntity.ok().body(new ApiResponse("User purchased product successfully"));
         };
     }
-//
-//
+
     @GetMapping("/get/out-of-stock/{merchantID}")
     public ResponseEntity<?> getOutOfStockProductsFromMerchant(@PathVariable Integer merchantID){
         if(merchantStockService.checkIfMerchantFound(merchantID))
