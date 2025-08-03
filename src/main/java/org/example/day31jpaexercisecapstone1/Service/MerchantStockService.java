@@ -3,7 +3,6 @@ package org.example.day31jpaexercisecapstone1.Service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.day31jpaexercisecapstone1.Model.*;
-import org.example.day31jpaexercisecapstone1.Repository.MerchantRepository;
 import org.example.day31jpaexercisecapstone1.Repository.MerchantStockRepository;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +29,7 @@ public class MerchantStockService {
         if(merchantService.getAllMerchants().isEmpty()) {  // checking if merchants are empty
             return 1;
         }
-        MerchantStock foundMerchantStock = merchantStockRepository.getById(merchantStock.getMerchant_id());
+        MerchantStock foundMerchantStock = merchantStockRepository.getById(merchantStock.getId());
         if(foundMerchantStock.equals(merchantStock)){
             return 5;
         }
@@ -184,10 +183,10 @@ public int addMoreStock(Integer productID, Integer merchantID, Integer amount) {
                 anyClearanceTriggered = true;
             }
 
+
+        }
         if(anyClearanceTriggered){
             return 2; //clearance was triggered for at least one product.
-        }
-
         }
         return 1; //no products met the criteria.
     }
@@ -198,7 +197,7 @@ public int addMoreStock(Integer productID, Integer merchantID, Integer amount) {
         double totalRevenue = 0;
 
 
-        if(targetMerchant == null) return "Invalid Merchant ID.";;
+        if(targetMerchant == null) return "Invalid Merchant ID.";
 
         for (MerchantStock stock : merchantStockRepository.findAll()){
             if(stock.getMerchant_id().equals(merchantID)){
